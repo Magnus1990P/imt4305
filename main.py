@@ -16,12 +16,15 @@ filters		= ["Low-Pass","High-Pass",]
 genIMG		= {}
 metrics		= {}
 
+
+
 def setSPlotSize(arr):
 	global spHeight, spWidth,spPos
 	print "Max number of subplots was changed from %d to %d" % (spHeight*spWidth, arr[0]*arr[1])
 	spHeight	= arr[0]
 	spWidth 	= arr[1]
 	spPos 		= 1
+
 
 def revertImg(img, arr):
 	print "reverting image"
@@ -83,19 +86,6 @@ def sPlot(pos, arr, img, title):
 		spPos		= spPos + 1
 	else:
 		print "position variable is reached maximal value of %i, revise size if needed" % spPos
-	
-
-
-def genHPFilter(shape=(6,6),sigma=0.5):
-	m,n 	= [(ss-1.)/2.0 for ss in shape]
-	y,x 	= mgrid[-m:m+1, -n:n+1]
-	h 		= exp( -(x*x + y*y) / (2.0*(sigma**2)) )
-
-	print h	
-	plt.plot(h)
-	plt.imshow(h)
-	
-
 	
 
 
@@ -199,6 +189,27 @@ def chooseFilter( ):
 def applyFilter( img, fltr ):
 	pass
 	#f = chooseFilter()
+
+
+
+
+
+def genLPFilter(size):
+	mVal = 255*2
+	
+	cX = int(size[1]/2)
+	cY = int(size[0]/2)
+	print [cX,cY]
+	M = []
+	for i in range(0,size[0]):
+		M.append( [0,]*size[1] )
+
+	for y in range(0, len(M)):
+		for x in range(0, len(M[y]) ):
+			M[y][x] = 1.0 / ((1+((sqrt((cX-x)**2+(cY-y)**2))/sqrt(cX**2+cY**2))) ** mVal )
+ 
+	return M
+ 	
 	
 
 
@@ -217,13 +228,12 @@ splitThatImage( oIMG );
 
 y = len(oIMG)
 x = len(oIMG[1])
-#genHPFilter( )
+#genHPFilter( [y,x] )
+H = genLPFilter( [len(oIMG),len(oIMG[0])] )
+h = genIMG["Shifted FFT"][1]*H
 
-fltr = [ [1./9,]*3,	]*3
-print fltr
-fImg = spSignal.convolve2d(abs(genIMG["Shifted FFT"][1]), fltr, mode="same")
-plt.imshow(fImg)
-#applyFilter( oIMG, fltr )
+plt.imshow( abs(log(1+h)), cmap="gray"  )
+plt.show()
 
 #showImage()
 
