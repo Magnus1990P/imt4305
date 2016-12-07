@@ -187,30 +187,8 @@ def chooseFilter( ):
 	print choice
 
 def applyFilter( img, fltr ):
-	pass
+	passy
 	#f = chooseFilter()
-
-
-
-
-
-def genLPFilter(size):
-	mVal = 255*2
-	
-	cX = int(size[1]/2)
-	cY = int(size[0]/2)
-	print [cX,cY]
-	M = []
-	for i in range(0,size[0]):
-		M.append( [0,]*size[1] )
-
-	for y in range(0, len(M)):
-		for x in range(0, len(M[y]) ):
-			M[y][x] = 1.0 / ((1+((sqrt((cX-x)**2+(cY-y)**2))/sqrt(cX**2+cY**2))) ** mVal )
- 
-	return M
- 	
-	
 
 
 #INPUT CHECK
@@ -226,14 +204,27 @@ genIMG.update({"Original image B/W":[[0],oIMG]})
 splitThatImage( oIMG );
 
 
-y = len(oIMG)
-x = len(oIMG[1])
-#genHPFilter( [y,x] )
-H = genLPFilter( [len(oIMG),len(oIMG[0])] )
-h = genIMG["Shifted FFT"][1]*H
+M = len( oIMG )
+N = len( oIMG[1] )
 
-plt.imshow( abs(log(1+h)), cmap="gray"  )
-plt.show()
+H = genLPFilter( "ideal", 5, 5, 2.5, 1.0)
+H = genLPFilter( "btw", 	5, 5, 2.5, 1.0)
+H = genLPFilter( "gaussian", 	5, 5, 2.5, 1.0)
+
+
+
+
+
+
+
+
+
+#h = genIMG["Shifted FFT"][1]*H
+
+#plt.imshow( abs(log(1+h)), cmap="gray"  )
+#plt.show()
+
+
 
 #showImage()
 

@@ -22,7 +22,6 @@ function H = lpfilter(type, M, N, D0, n)
 
 % Compute the distances D(U, V).
 D = sqrt(U.^2 + V.^2);
-
 % Begin fiter computations.
 switch type
 case 'ideal'
