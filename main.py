@@ -30,8 +30,8 @@ spWidth		= 1
 spPos			= 1		
 
 genIMG		= {}
-metrics		= {}
 filters		= sorted(["LP: Ideal", "LP: Buttwerworth", "LP: Gaussian", 
+										"Noise: Line rotate",
 										"HP: Ideal", "HP: Buttwerworth", "HP: Gaussian"])
 
 
@@ -46,36 +46,6 @@ filters		= sorted(["LP: Ideal", "LP: Buttwerworth", "LP: Gaussian",
 def console_log( TEXT=" " ):
 	if OUTPUT:
 		print TEXT
-
-################################################################################
-#
-# Calculates the histogram of the image
-#
-#	@param img:	MxN size matrix
-#	@return hgram:	1x256 matrix containg counters for each graylevel value
-################################################################################
-def calcHistogram( img ):
-	hgram = [0,]*256 																		#Generate 255 long array
-	console_log("\tCalculating the histogram of image")
-	for y in img:
-		for x in y:
-			hgram[int(x)] = hgram[int(x)]+1									#incrementing cell counter
-	return hgram	
-
-
-################################################################################
-#
-# 
-#
-#	@param :	
-#
-#	@return :		
-#
-################################################################################
-def rmse(org, diff):																	#Root Mean Squared Error
-	console_log("RMSE")
-	RMSE	= sqrt( ( (diff - org)**2 ).mean() )					#Calculating RMSE
-	return RMSE
 
 
 
@@ -401,9 +371,9 @@ def showImages():
 #
 #	@param h1:	Histogram of original image
 #	@param h2:	Histogram of altered image
+#	@param metrics:	Dictionary for metrics
 ################################################################################
-def histComp(h1,h2):
-	global metrics
+def histComp(h1,h2, metrics):
 	DLman = DLeuc = DLcos = DLmat = 0
 	for i in range(0,256):
 		DLman = DLman + abs(h1[i] - h2[i])
@@ -421,41 +391,73 @@ def histComp(h1,h2):
 
 ################################################################################
 #
+# Calculates the histogram of the image
+#
+#	@param img:	MxN size matrix
+#	@return hgram:	1x256 matrix containg counters for each graylevel value
+################################################################################
+def calcHistogram( img ):
+	hgram = [0,]*256 																		#Generate 255 long array
+	console_log("\tCalculating the histogram of image")
+	for y in img:
+		for x in y:
+			hgram[int(x)] = hgram[int(x)]+1									#incrementing cell counter
+	return hgram	
+
+
+################################################################################
+#
+# 
+#
+#	@param :	
+#
+#	@return :		
+#
+################################################################################
+def rmse(org, diff):																	#Root Mean Squared Error
+	console_log("RMSE")
+	RMSE	= sqrt( ( (diff - org)**2 ).mean() )					#Calculating RMSE
+	return RMSE
+
+
+################################################################################
+#
 # Compare altered image agains the original image
 #
 #	@param title: Title of altered image to compare	
 ################################################################################
 def compare( title ):
-	global metrics
-	setSPlotSize([2,2]);
+	global genIMG
+	metrics={}
 	dImgTitle = title
 	dImgArr		= genIMG[title][0][:]
 	dImgImg		= genIMG[title][1][:]
 
-	sPlot(spPos, [0], oIMG, "Original image B/W")
-	sPlot(spPos, [0,1], dImgImg, dImgTitle)	
-
-	histOrg = histogram( oIMG )
-	histFil	= histogram( imgAction(dImgImg, dImgArr) )
+	histOrg = calcHistogram( oIMG )
+	histFil	= calcHistogram( imgAction(dImgImg, dImgArr) )
 	histDif	= histFil[:]
+
 	metrics.update({"RMSE": rmse(imgAction(dImgImg, dImgArr), oIMG)})
 
 	for i in range(0,len(histOrg)):
-		histDif[i] = abs(histOrg[i] - histDif[i])
+		histDif[i] = abs(histOrg[i] - histFil[i])
 
 	#Plot histograms
+	setSPlotSize([2,2]);
+	sPlot(spPos, [0], 	oIMG, "Original image B/W")
+	sPlot(spPos, dImgArr, dImgImg, dImgTitle)	
 	sPlot(spPos, [20], [[0, amax(histOrg)+500 ], histOrg, histFil], 
 				"Histogram - both images")
 	sPlot(spPos, [20], [[0, amax(histDif)+100 ], histDif],
 				"Histogram - diff")
-
 	plt.show()
-	histComp(histOrg,histFil)	
-	for i in metrics.keys():
-		console_log("%50s: %20s" %(i,str(metrics[i])))
-	metrics.update({"orgHist":histOrg})	
+
+	histComp(histOrg,histFil, metrics)	
+
 	metrics.update({"filHist":histFil})	
 	metrics.update({"difHist":histDif})
+	
+	genIMG[title].append(metrics)
 
 
 
@@ -483,65 +485,129 @@ def chooseFilter( ):
 ################################################################################
 def applyFilter( D0=100 ):
 	global genIMG
-#	fltr = chooseFilter()								#Choose filter to apply
-	fltr = "LP: Gaussian"
-	fltr = "LP: Buttwerworth"
-	console_log("You chose the %s, please input data or use its default" % fltr)
+	fltr = chooseFilter()								#Choose filter to apply
+	print "You chose the %s, please input data or use its default" % fltr
 	
 	iFFTS = genIMG["Shifted FFT"][1]		#Grab shifted FFT2 of orignal image
 	M,N 	= iFFTS.shape									#Get the dimensions
 	t 		= "ideal"											#Default filter
-	H 		= None												#Resulting filter
 	n 		= 1.0													#btw-multiplier
-
-	#print "Cut-off frequency as single integer or float greater than 0."
-	#D0	= float(raw_input("D0:\t"))		#grab Cut-off value
+	k			= 1.0
 
 	if fltr == "LP: Buttwerworth":
 		t = "btw"
 		print "Butterwort multiplier value. Float value <= 1.0"
 		n	= float(raw_input("n:\t"))
-	elif fltr == "LP: Gaussian":
-		t = "gaussian"
 	elif fltr == "HP: Buttwerworth":
 		print "Butterwort multiplier value. Float value equal to or greater than 1.0"
 		n	= float(raw_input("n:\t"))
+
+	elif fltr == "LP: Gaussian":
+		t = "gaussian"
 	elif fltr == "HP: Gaussian":
 		t = "gaussian"
-	if fltr[0:2] == "LP":
-		H = genLPFilter(t,M,N,D0,n)
-	elif fltr[0:2] == "HP":
-		H = genHPFilter(t,M,N,D0,n)
-	else:
-		print "Unknown Filter, quitting"
-		sys.exit(0)
 
-	H 		= imgAction(H,[2])
-	fLP		= (H*iFFTS)					#Create filter (FFT)
-	m 		= (H+(1*fLP))
+	happy = False
+	print "Cut-off frequency as single integer or float greater than 0."
+	D0	= float(raw_input("D0:\t"))		#grab Cut-off value
+	while happy is False:
+		nIMG = None																					#Zero out variable
+		setSPlotSize([1,2])																	#Set image layout
+		sPlot(spPos, [],			(oIMG),	"Original image")			#image + mask
+		if fltr[0:2] == "LP":
+			H 	= imgAction( genLPFilter(t,M,N,D0,n), [2] )		#LP filter
+			fLP	= (H*iFFTS)																		#Create filter (FFT)
+			nIMG = imgAction( fLP, [2,1] )										#revert to spatial
+			sPlot(spPos, [3,0],		fLP,	"")										#image + mask
 
-	k = 10
-	setSPlotSize([2,2])														#Set image layout
+		elif fltr[0:2] == "HP":
+			print "Multiplier value for the mask application. (k=%d)" %k
+			k			= float(raw_input("k:\t"))									#grab k value
 
-	sPlot(spPos, [3,0],			(iFFTS+(k*m)),	"")			#image + mask
-	sPlot(spPos, [2,1,0],		(iFFTS+(k*m)),	"")			#image + mask
+			H 		= imgAction( genHPFilter(t,M,N,D0,n), [2] )	#LP filter
+			fHP		= (H*iFFTS)													#Image w/o LP
+			nIMG	= oIMG + (k*imgAction(fHP, [2,1]))					#Apply mask to image
 
-
-	H2    = (1-H)
-	fLP2	= (H2*iFFTS)					#Create filter (FFT)
-	m2 		= (H2+(1*fLP2))
-
-	sPlot(spPos, [3,0],		(iFFTS+(k*m2)),	"")			#image + mask
-	sPlot(spPos, [2,1,0],		(iFFTS+(k*m2)),	"")			#image + mask
-
-
-	plt.show()																					#Show images
-	
 	
 
 
+		elif fltr == "Noise: Line rotate":
+			degree = 0
+			H = (abs(iFFTS[:]) * 0)
+			Hf= H[:]
+			Y,X = H.shape	
+			for y in range(0, (Y/2)-int(D0)):
+				for x in range((X/2)-1, (X/2)+1):
+					H[y][x] = 1
+			print "Treshold value for mask application. (k=%.3f)" % k
+			k			= float(raw_input("k:\t"))									#grab k value
+			while degree < 360:
+				h = spMisc.imrotate(H, degree )
+				ni = (iFFTS*h)
+				if ((abs(sum(ni))/1000) / abs(sum(h))) > k:
+					Hf = Hf + h
+				degree = degree + 0.5
+			for y in range(0, Y):
+				for x in range(0, X):
+					Hf[y][x] = 0 if Hf[y][x] == 0 else 1
+			fLP		= (Hf*iFFTS)
+			nIMG	= imgAction( (iFFTS + (1*fLP)) , [2,1] )
+			
+		else:
+			print "Unknown Filter, quitting"
+			sys.exit(0)
+
+		sPlot(spPos, [0],		nIMG,	"New Image")			#image + mask
+		plt.show()
+
+		print "Happy with current filter, (D0=%d, n=%.2f, k=%d?\n-X, +X. Y, Q" % (D0, n, k)
+		ans = raw_input("Action: ")
+		if ans == "Y":
+			happy = True
+			genIMG.update({fltr + "(D0=%d, n=%.3f, k=.3f)" %(D0,n,k):
+										[[2,1,0], nIMG ]})
+		elif ans == "Q":
+			print "Exiting"
+			happy = True
+		elif ans[0] == "-":
+			print "Subtracting %s from cutoff freq (D0=%d)" % (ans[1:], D0)
+			D0 = D0 - int(ans[1:])
+		elif ans[0] == "+":
+			print "Adding %s to cutoff freq (D0=%d)" % (ans[1:], D0)
+			D0 = D0 + int(ans[1:])
+
+################################################################################
+#
+# Save image and data
+#
+# @param title: Title of image with metrics
+################################################################################
+def saveImage( title ):
+	mets	= genIMG[title][2]
+	img		= genIMG[title][1]
+
+	spMisc.imsave("./outdir/"+title+"jpg", img)
+
+	out = open("./outdir/"+title+".met", "w")
+	for t in sorted(mets.keys()):
+		out.write( "%25s: %s" % (t, mets[t]) )
+	out.close()
 
 
+################################################################################
+#
+# Print metrics
+#
+# @param title: Title of image with metrics
+################################################################################
+def dispMetrics( title ):
+	if len(genIMG[title]) < 3:
+		print "No metrics for this image exists. Please run a comparison."
+		return
+	mets = genIMG[title][2]
+	for t in sorted(mets.keys()):
+		if t not in ["difHist","filHist"]:
+			print "%35s: %s" % (t, mets[t])
 
 
 
@@ -564,15 +630,47 @@ if len(sys.argv) > 2 and sys.argv[-1]=="TRUE":
 #	versions(FFT, FFT Shifted, Phase, Imaginary, real and magnitude)
 #
 ################################################################################
-fIMG	= sys.argv[1]
-oIMG	= imread( fIMG, 0 )
-genIMG.update({"Original image B/W":[[0],oIMG]})
-splitThatImage()
+fIMG	= sys.argv[1]																	#Grab filename
+oIMG	= imread( fIMG, 0 )														#Load image as grayscale
+genIMG.update({"Original image B/W":[[0],oIMG]})		#save image in image info
+splitThatImage()																		#Split image into
 
-applyFilter(25)
+QUIT = False
+while QUIT is False:
+	print "%s\n##\tMenu options\n%s\n" % ("#"*80, "#"*80)
+	print "\t1 - Display a set of images"
+	print "\t2 - Perform filter operations on image"
+	print "\t3 - Compare an altered image against the original and show the data"
+	print "\t4 - Display metrics of images"
+	print "\t5 - "
+	print "\t - "
+	print "\tS - Save new image to file"
+	print "\tQ - Quit the program"
+	print ""
+	ans = raw_input("Choice:..... ")
+	if ans == "1":											#Show a set of images
+		showImages()
 
+	elif ans == "2":										#Apply filter to image
+		applyFilter( 100 )
 
+	elif ans in ["3", "4", "S"]:				#Compare, display or save
+		titles = chooseImages()
+		print "Following images was selected: " + ", ".join(titles)
+		for i in titles:
+			if ans == "3":
+				compare( i )
+			elif ans == "4":										#TBD
+				dispMetrics( i )
+			elif ans =="S":
+				saveImage( i )
 
+	elif ans == "Q":										#QUIT
+		print "Exiting the program without further actions"
+		QUIT = True
+		
+	else:																#Do another run
+		pass
 
 
 
