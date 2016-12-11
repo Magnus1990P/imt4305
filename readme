@@ -1,5 +1,11 @@
 IMT4305
-################################################################################
+-------
+
+@author: Magnus Øverbl
+@date:_  2016.12.11
+
+Description
+__________
 This software takes an arbitrary input image and reads it as a grayscale image.  Then it gives you the option to perform an arbitrary number of operations on the image. (Given that they are listed and programmed.
 Default it has three methods for sharpening, three methods for blur and three methods for reducing noise.
 It performs comparison by generating the histogram and RMSE of two images	then storing the resulting metrics for comparison later on.
