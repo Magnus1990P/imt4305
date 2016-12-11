@@ -32,6 +32,7 @@ spPos			= 1
 genIMG		= {}
 filters		= sorted(["LP: Ideal", "LP: Buttwerworth", "LP: Gaussian", 
 										"Noise: Line rotate",
+										"Noise: Local spots",
 										"Noise: Horizontal-Vertical",
 										"HP: Ideal", "HP: Buttwerworth", "HP: Gaussian"])
 
@@ -525,8 +526,9 @@ def applyFilter( D0=100 ):
 			print "Multiplier value for the mask application. (k=%d)" %k
 			k			= float(raw_input("k:\t"))										#grab k value
 
-			H 		= imgAction( genHPFilter(t,M,N,D0,n), [2] )		#LP filter
-			fHP		= (H*iFFTS)																		#Image w/o LP
+			H 		= imgAction( genLPFilter(t,M,N,D0,n), [2] )		#LP filter
+			mask	= (iFFTS - (iFFTS*H))
+			fHP		= (iFFTS + (mask * k))												#Image w/o LP
 			nIMG	= oIMG + (k*imgAction(fHP, [2,1]))						#Apply mask to image
 
 	
@@ -557,22 +559,16 @@ def applyFilter( D0=100 ):
 					console_log( "%.1f,%d,%d,%2.f" % (degree,magFilter,magLocal,
 																						magFilter/(magLocal*100)))
 					Hf = (Hf + h)																		#Add filter to main
-
 				degree = degree + 0.5															#increase rotation
-
-			for y in range(0, Y):																#for each row
-				for x in range(0, X):															#for eahc cell in row
-					Hf[y][x] = 0 if Hf[y][x] == 0 else 1						#perform inversion
 
 			fLP		= (Hf*iFFTS)																	#Convolve FFT & filter
 			nIMG	= imgAction( (iFFTS + (1*fLP)) , [2,1,0] )		#Create new image
-		
 
 
 
 
 		elif fltr == "Noise: Horizontal-Vertical":
-			Hf 		= (abs(iFFTS[:]) * 0)															#Create temp mesh
+			Hf 		= (abs(iFFTS[:]) * 0)+1														#Create temp mesh
 			Y,X 	= Hf.shape																				#Grab size
 			Hx 		= [0,]*X
 			Hy 		= [0,]*Y
@@ -594,9 +590,6 @@ def applyFilter( D0=100 ):
 			magYLocal	= (magTotal * pxYPer)											#Mag in area of filter
 			magXLocal	= (magTotal * pxXPer)											#Mag in area of filter
 
-			print len(Hx), len(Hy)
-			print
-
 			print "Treshold value for mask application. (k=%.3f)" % k
 			k			= float(raw_input("k:\t"))										#grab k value
 
@@ -609,7 +602,7 @@ def applyFilter( D0=100 ):
 				comp = magFilter/(magYLocal*100)
 				if comp >= k:
 					console_log("Added vertical filter line. R=%d, v=%.2f" % (x, comp))
-					Hf = (Hf + Hcy)																#Add filter to main
+					Hf = (Hf - Hcy)																#Add filter to main
 
 			#Horisontal filter line
 			for y in range(0,Y):																#Generate horisontal
@@ -620,20 +613,45 @@ def applyFilter( D0=100 ):
 				comp = magFilter/(magXLocal*100)
 				if comp >= k:																			#Check requirements
 					console_log("Added Horisontal filter line. C=%d, v=%.2f" % (y, comp))
-					Hf = (Hf + Hcx)																	#Add filter to main
+					Hf = (Hf - Hcx)																	#Add filter to main
 					
-			#for y in range(0, Y):																#for each row
-			#	for x in range(0, X):															#for eahc cell in row
-			#		print Hf[y][x]
-			#		Hf[y][x] = 1 if Hf[y][x] == 0 else 1						#perform inversion
-
 			fLP		= (Hf*iFFTS)																	#Convolve FFT & filter
 			nIMG	= imgAction( (iFFTS + (1*fLP)) , [2,1,0] )		#Create new image
+	
 		
-			setSPlotSize([1,2])
-			sPlot(spPos, [3,0],		fLP,	"New Image")						#image + mask
-			sPlot(spPos, [0],			Hf,	"New Image")							#image + mask
+
+		elif "Noise: Local spots":
+			iFFTS2 		= abs(iFFTS)
+			Hf 				= (iFFTS2 * 0)														#Create temp mesh
+			Y,X 			= Hf.shape																#Grab size
+			
+			setSPlotSize([1,3])
+
+			print "Treshold value for mask application (avg*k). (k=%.3f)" % k
+			k			= float(raw_input("k:\t"))										#grab k value
+
+			for y in range(2,Y-3):
+				for x in range(2,X-3):
+					comp = (iFFTS2[y][x-1] + iFFTS2[y][x+1] + iFFTS2[y][x] + 
+									iFFTS2[y-1][x] + iFFTS2[y+1][x] ) / float(5)
+					Hf[y][x] = comp
+			avg = sum(Hf)/float(X*Y)
+			
+			for y in range(0,Y):
+				for x in range(0,X):
+					if Hf[y][x] > avg*k:
+						Hf[y][x] = 0
+					else:
+						Hf[y][x] = 1
+				Hf[y][0] = 1
+				Hf[y][1] = 1
+			Hf = Hf + imgAction(genLPFilter("ideal",M,N,D0,n), [2])	#LP filter
+			
+			nIMG = imgAction( (iFFTS*Hf),	[2,1,0])									#image + mask
 			plt.show()
+			
+			
+
 
 
 
