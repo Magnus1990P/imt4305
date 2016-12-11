@@ -1,12 +1,29 @@
 #!/usr/bin/env python
 ################################################################################
 ##
+##	@author:	Magnus1990P
+##	@Name:		Magnus Øverbø
+##	@date:		2016.12.11
 ##	
+##	This software takes an arbitrary input image and reads it as a grayscale
+##	image.  Then it gives you the option to perform an arbitrary number of
+##	operations on the image. (Given that they are listed and programmed.
 ##
+##	Default it has three methods for sharpening, three methods for blur and
+##	three methods for reducing noise.
 ##
+##	It performs comparison by generating the histogram and RMSE of two images
+##	then storing the resulting metrics for comparison later on.
+##
+##	The program also allows for saving or discarding images when applying filter
+##	and automatically stores images upon exiting the software.
+##	It has hardoced names and will overwrite any existing files in the outdir.
 ##
 ################################################################################
 ################################################################################
+##
+##	Import libraries
+##
 ################################################################################
 ################################################################################
 from		cv2								import *
@@ -19,8 +36,13 @@ import	matplotlib.pyplot as plt
 
 
 
-
-
+################################################################################
+################################################################################
+##
+##	Global variables
+##
+################################################################################
+################################################################################
 fIMG	= None
 oIMG	= None
 OUTPUT = False
@@ -37,21 +59,13 @@ filters		= sorted(["LP: Ideal", "LP: Buttwerworth", "LP: Gaussian",
 										"HP: Ideal", "HP: Buttwerworth", "HP: Gaussian"])
 
 
-
-
 ################################################################################
-#
-# Function which output logging when desired
-#
-#	@param TEXT:	String containing the output string
 ################################################################################
-def console_log( TEXT=" " ):
-	if OUTPUT:
-		print TEXT
-
-
-
-
+##
+##  FUNCTIONS FROM UC REGINA
+##
+################################################################################
+################################################################################
 ################################################################################
 ##
 ## This code in its entirety is collected and converted from the code published on
@@ -189,6 +203,22 @@ def genHPFilter(t, M, N, D0=100.0, n=1.0):
 
 
 
+################################################################################
+################################################################################
+##
+##  CUSTOM FUNCTIONS WRITTEN FOR IMPLEMENTING THE FUNCTIONALITY IN THIS PROGRAM
+##
+################################################################################
+################################################################################
+################################################################################
+#
+# Function which output logging when desired
+#
+#	@param TEXT:	String containing the output string
+################################################################################
+def console_log( TEXT=" " ):
+	if OUTPUT:
+		print TEXT
 
 ################################################################################
 #
@@ -245,7 +275,6 @@ def imgAction(oimg, arr):
 		elif i == 15:
 			console_log("\tCalculating the magnitude of FFT2")
 			img = abs(img)
-
 	return img
 
 ################################################################################
@@ -267,7 +296,6 @@ def splitThatImage( ):
 								[[2,1,0],	imgAction(oIMG[:], [10,11,14,])]	})
 	genIMG.update({'Magnitude of FFTSHIFT':
 								[[3,0],	imgAction(oIMG[:], [10,11,15])]	})
-
 	genIMG.update({'Reconstructed (Mag * phase)': [[2,1,0],
 		(imgAction(oIMG[:],[10,11,15])[:] * imgAction(oIMG[:], [10,11,14])[:])]})
 
@@ -284,7 +312,6 @@ def setSPlotSize(arr):
 	spHeight	= arr[0]
 	spWidth 	= arr[1]
 	spPos 		= 1
-
 
 
 ################################################################################
@@ -346,7 +373,6 @@ def chooseImages():
 		tList.append( titles[ind] )
 
 	return tList
-	
 
 
 ################################################################################
@@ -362,9 +388,11 @@ def showImages():
 	titles = chooseImages()													#Choose a set of images
 
 	for T in titles:																#Plot all images in the list
-		sPlot(spPos, genIMG[T][0], genIMG[T][1], T)		#Plot images 
+		if T in ["Shifted FFT", "FFT"]:
+			sPlot(spPos, [3,0], genIMG[T][1], T)		#Plot images 
+		else:
+			sPlot(spPos, genIMG[T][0], genIMG[T][1], T)		#Plot images 
 	plt.show()																			#Display the imageboard
-
 
 
 ################################################################################
@@ -399,22 +427,22 @@ def histComp(h1,h2, metrics):
 #	@return hgram:	1x256 matrix containg counters for each graylevel value
 ################################################################################
 def calcHistogram( img ):
-	hgram = [0,]*256 																		#Generate 255 long array
+	hgram = [0,]*256 																			#Generate 255 long array
 	console_log("\tCalculating the histogram of image")
 	for y in img:
 		for x in y:
-			hgram[int(x)] = hgram[int(x)]+1									#incrementing cell counter
-	return hgram	
+			x = int(x) % len(hgram) 									#Grab value betwwon 0-255
+			hgram[x] = hgram[x]+1											#incrementing cell counter
+	return hgram																	#Return histogram
 
 
 ################################################################################
 #
-# 
+#	Root Mean Squared Error 
 #
-#	@param :	
-#
-#	@return :		
-#
+#	@param 	org:	original image histogram
+#	@param	diff:	the altered image histogram
+#	@return RMSE:	The value of RMSE	
 ################################################################################
 def rmse(org, diff):																	#Root Mean Squared Error
 	console_log("RMSE")
@@ -430,23 +458,24 @@ def rmse(org, diff):																	#Root Mean Squared Error
 ################################################################################
 def compare( title ):
 	global genIMG
-	metrics={}
-	dImgTitle = title
-	dImgArr		= genIMG[title][0][:]
-	dImgImg		= genIMG[title][1][:]
+	metrics={}																						#Locale dict for metrics
+	dImgTitle = title																			#Grab title
+	dImgArr		= genIMG[title][0][:]												#Grab reversion array
+	dImgImg		= genIMG[title][1][:]												#Grab image
 
-	histOrg = calcHistogram( imgAction(oIMG, [0]) )
-	histFil	= calcHistogram( imgAction(dImgImg, dImgArr) )
-	histDif	= histFil[:]
-
-	metrics.update({"RMSE": rmse(imgAction(dImgImg, dImgArr), oIMG)})
-
+	histOrg = calcHistogram( imgAction(oIMG, [0]) )				#Calc histogram org img
+	histFil	= calcHistogram( imgAction(dImgImg, dImgArr))	#Calc histogram mod img
+	histDif	= histFil[:]																	#Create list for diff
 	for i in range(0,len(histOrg)):
-		histDif[i] = abs(histOrg[i] - histFil[i])
+		histDif[i] = abs(histOrg[i] - histFil[i])						#Populate diff list
+
+	metrics.update({"RMSE": 															#Calculate and add
+									rmse(imgAction(dImgImg, dImgArr),			#RMSE to metrics list
+									oIMG)})																#
 
 	#Plot histograms
-	setSPlotSize([2,2]);
-	sPlot(spPos, [0], 	oIMG, "Original image BW")
+	setSPlotSize([2,2]);																	#2x2 plot
+	sPlot(spPos, [0], 	oIMG, "Original image BW")				
 	sPlot(spPos, dImgArr, dImgImg, dImgTitle)	
 	sPlot(spPos, [20], [[0, amax(histOrg)+500 ], histOrg, histFil], 
 				"Histogram - both images")
@@ -454,13 +483,43 @@ def compare( title ):
 				"Histogram - diff")
 	plt.show()
 
-	histComp(histOrg,histFil, metrics)	
+	histComp(histOrg,histFil, metrics)										#Generate metrics
 
-	metrics.update({"filHist":histFil})	
-	metrics.update({"difHist":histDif})
-	
-	genIMG[title].append(metrics)
+	metrics.update({"filHist":histFil})										#Add histogram 2 metrics
+	metrics.update({"difHist":histDif})										#Add histogram 2 metrics
+	genIMG[title].append(metrics)													#Add metrics to image
 
+
+################################################################################
+#
+# Function for reversing a binary mask
+#
+#	@param	fltr:		A numpy array of MxN with a binary value of 0 or 1
+#	@return rFltr:	Returns the reverse mask of filter
+################################################################################
+def reverseMask( fltr ):
+	rFltr = fltr[:]
+	for a in range(0,len(fltr)):
+		for b in range(0, len(fltr[a])):
+			rFltr[a][b] = 1 if fltr[a][b]==0 else 0
+	return rFltr
+
+
+################################################################################
+#
+# Normalise the image after filter has been applied.
+#
+# @param img: 	Image reverted from frequency to spatial doamn
+# @return img:	Normalised image in the spatial domain
+################################################################################
+def normalizeGrayImg( img ):
+	mi	= amin( img )																	#Grab lowest value
+	ma	= amax( img )																	#Grab largest value
+	sc	= ma / float(255)															#Calculate scale
+	for a in range(0, len(img)):											
+		for b in range(0, len(img[a])):
+			img[a][b] = ((abs(img[a][b])-mi) / sc) - mi		#Normalise image
+	return img																				#Return new image
 
 
 ################################################################################
@@ -475,8 +534,7 @@ def chooseFilter( ):
 	for f in filters:
 		print "%2d: %s" % (i, f)
 		i += 1
-	print ""
-	choice = int( raw_input("Choose filter: ").rstrip() )
+	choice = int( raw_input("\nChoose filter: ").rstrip() )
 	return filters[choice]
 
 
@@ -495,41 +553,37 @@ def applyFilter( D0=100 ):
 	t 		= "ideal"											#Default filter
 	n 		= 1.0													#btw-multiplier
 	k			= 1.0
-
-	if fltr == "LP: Buttwerworth":
-		t = "btw"
-		print "Butterwort multiplier value. Float value <= 1.0"
-		n	= float(raw_input("n:\t"))
-	elif fltr == "HP: Buttwerworth":
-		print "Butterwort multiplier value. Float value equal to or greater than 1.0"
-		n	= float(raw_input("n:\t"))
-
-	elif fltr == "LP: Gaussian":
-		t = "gaussian"
-	elif fltr == "HP: Gaussian":
-		t = "gaussian"
+	Hf		= None
 
 	happy = False
 	print "Cut-off frequency as single integer or float greater than 0."
 	D0	= float(raw_input("D0:\t"))		#grab Cut-off value
 	while happy is False:
 		nIMG = None																						#Zero out variable
-		setSPlotSize([1,2])																		#Set image layout
-		sPlot(spPos, [],			(oIMG),	"Original image")				#image + mask
+
+		#Set filter parameters, and select butterworth multiplier
+		if fltr == "LP: Buttwerworth":
+			t = "btw"
+			print "Butterwort multiplier value. Float value <= 1.0"
+			n	= float(raw_input("n:\t"))
+		elif fltr == "HP: Buttwerworth":
+			print "Butterwort multiplier value. Float value equal to or greater than 1.0"
+			n	= float(raw_input("n:\t"))
+		elif fltr == "LP: Gaussian" or fltr == "HP: Gaussian":
+			t = "gaussian"
+
 		if fltr[0:2] == "LP":
-			H 	= imgAction( genLPFilter(t,M,N,D0,n), [2] )			#LP filter
-			fLP	= (H*iFFTS)																			#Create filter (FFT)
-			nIMG = imgAction( fLP, [2,1] )											#revert to spatial
-			sPlot(spPos, [3,0],		fLP,	"")											#image + mask
+			Hf 	= imgAction( genLPFilter(t,M,N,D0,n), [2] )			#LP filter
+			fp	= (Hf*iFFTS)																		#Create filter (FFT)
+			nIMG = imgAction( fp, [2,1] )												#revert to spatial
 
 		elif fltr[0:2] == "HP":
 			print "Multiplier value for the mask application. (k=%d)" %k
 			k			= float(raw_input("k:\t"))										#grab k value
-
-			H 		= imgAction( genLPFilter(t,M,N,D0,n), [2] )		#LP filter
-			mask	= (iFFTS - (iFFTS*H))
-			fHP		= (iFFTS + (mask * k))												#Image w/o LP
-			nIMG	= oIMG + (k*imgAction(fHP, [2,1]))						#Apply mask to image
+			Hf 		= imgAction( genLPFilter(t,M,N,D0,n), [2] )		#LP filter
+			mask	= (iFFTS - (iFFTS*Hf))												#Generate mask
+			fp		= (iFFTS + (mask * k))												#Image w/o LP
+			nIMG	= oIMG + (k*imgAction(fp, [2,1]))							#Apply mask to image
 
 	
 		elif fltr == "Noise: Line rotate":
@@ -556,33 +610,28 @@ def applyFilter( D0=100 ):
 				magFilter	= sum( abs(ni) )												#Local magnitude
 			
 				if (magFilter / (magLocal*100)) >= k:
-					console_log( "%.1f,%d,%d,%2.f" % (degree,magFilter,magLocal,
-																						magFilter/(magLocal*100)))
 					Hf = (Hf + h)																		#Add filter to main
 				degree = degree + 0.5															#increase rotation
-
+			
+			Hf = reverseMask( Hf )															#Reverse the mask
 			fLP		= (Hf*iFFTS)																	#Convolve FFT & filter
 			nIMG	= imgAction( (iFFTS + (1*fLP)) , [2,1,0] )		#Create new image
 
-
-
-
 		elif fltr == "Noise: Horizontal-Vertical":
-			Hf 		= (abs(iFFTS[:]) * 0)+1														#Create temp mesh
-			Y,X 	= Hf.shape																				#Grab size
-			Hx 		= [0,]*X
-			Hy 		= [0,]*Y
-			Hcx 	= Hf[:]
-			Hcy		= Hf[:]
-			pxTot	= X*Y
+			Hf 		= (abs(iFFTS[:]) * 0)													#Create temp mesh
+			Y,X 	= Hf.shape																		#Grab size
+			Hx 		= [0,]*X																			#Row filter
+			Hy 		= [0,]*Y																			#Column filter
+			Hcx 	= Hf[:]																				#tmp filters
+			Hcy		= Hf[:]																				#tmp fitlers
+			pxTot	= X*Y																					#total pixel count
 
 			for y in range(0, (Y/2)-int(D0)):										#Create binary mask
 				Hy[y] 		= 1																			#Mark cell as 1
 				Hy[Y-y-1] = 1																			#Mark cell as 1
-			
 			for x in range(0, (X/2)-int(D0)):										#Create binary mask
-				Hx[x] 			= 1																			#Mark cell as 1
-				Hx[X-x-1] 	= 1																			#Mark cell as 1
+				Hx[x] 			= 1																		#Mark cell as 1
+				Hx[X-x-1] 	= 1																		#Mark cell as 1
 			
 			magTotal	= sum( abs(iFFTS) )												#Total magnitude
 			pxYPer		= Y / float(pxTot)												#Percentage filter is
@@ -596,88 +645,86 @@ def applyFilter( D0=100 ):
 			#Vertical filter line
 			for x in range(0,X):																#Generate vertical 
 				for y in range(0,Y):															#filter for all cols
-					Hcy[y][x] = Hy[y]
+					Hcy[y][x] = Hy[y]																#
 				ni = (iFFTS * Hcy)																#Convolute ifft & mask
 				magFilter	= sum( abs(ni) )												#Local magnitude
-				comp = magFilter/(magYLocal*100)
+				comp = magFilter/(magYLocal*100)									#
 				if comp >= k:
-					console_log("Added vertical filter line. R=%d, v=%.2f" % (x, comp))
-					Hf = (Hf - Hcy)																#Add filter to main
+					Hf = (Hf + Hcy)																	#Add filter to main
 
 			#Horisontal filter line
 			for y in range(0,Y):																#Generate horisontal
 				for x in range(0,X):															#filter for all rows
-					Hcx[y][x] = Hx[x]
+					Hcx[y][x] = Hx[x]																#Set tmp filter pixel
 				ni = (iFFTS * Hcx)																#Convolute ifft & mask
 				magFilter	= sum( abs(ni) )												#Local magnitude
-				comp = magFilter/(magXLocal*100)
+				comp = magFilter/(magXLocal*100)									#grab comparison value
 				if comp >= k:																			#Check requirements
-					console_log("Added Horisontal filter line. C=%d, v=%.2f" % (y, comp))
-					Hf = (Hf - Hcx)																	#Add filter to main
-					
+					Hf = (Hf + Hcx)																	#Add filter to main
+
 			fLP		= (Hf*iFFTS)																	#Convolve FFT & filter
 			nIMG	= imgAction( (iFFTS + (1*fLP)) , [2,1,0] )		#Create new image
-	
-		
 
 		elif "Noise: Local spots":
-			iFFTS2 		= abs(iFFTS)
+			iFFTS2 		= abs(iFFTS)															#Absolute of FFT2
 			Hf 				= (iFFTS2 * 0)														#Create temp mesh
 			Y,X 			= Hf.shape																#Grab size
 			
-			setSPlotSize([1,3])
-
 			print "Treshold value for mask application (avg*k). (k=%.3f)" % k
 			k			= float(raw_input("k:\t"))										#grab k value
 
-			for y in range(2,Y-3):
+			for y in range(2,Y-3):															#Grab mean of 5 cells
 				for x in range(2,X-3):
 					comp = (iFFTS2[y][x-1] + iFFTS2[y][x+1] + iFFTS2[y][x] + 
 									iFFTS2[y-1][x] + iFFTS2[y+1][x] ) / float(5)
-					Hf[y][x] = comp
-			avg = sum(Hf)/float(X*Y)
+					Hf[y][x] = comp																	#Populate w/comp value
+			avg = sum(Hf)/float(X*Y)														#Grab average
 			
-			for y in range(0,Y):
-				for x in range(0,X):
-					if Hf[y][x] > avg*k:
-						Hf[y][x] = 0
+			for y in range(0,Y):																#Check if cell value
+				for x in range(0,X):															#is k times greather
+					if Hf[y][x] > avg*k:														#than the average
+						Hf[y][x] = 0																	#	then block out cell
 					else:
-						Hf[y][x] = 1
-				Hf[y][0] = 1
-				Hf[y][1] = 1
+						Hf[y][x] = 1																	# else allow it
+				Hf[y][0] = 1																			#Set left side static-
+				Hf[y][1] = 1																			#ally
 			Hf = Hf + imgAction(genLPFilter("ideal",M,N,D0,n), [2])	#LP filter
 			
-			nIMG = imgAction( (iFFTS*Hf),	[2,1,0])									#image + mask
-			plt.show()
-			
-			
-
-
-
+			nIMG = imgAction( (iFFTS*Hf),	[2,1,0])							#image + mask
 
 		else:
-			print "Unknown Filter, quitting"
-			sys.exit(0)
-
-		sPlot(spPos, [0],		nIMG,	"New Image")								#image + mask
-		plt.show()
+			print "Unknown Filter, quitting"										#print error and
+			return																							#Escape function
+		
+		nIMG = normalizeGrayImg(nIMG)													#image + mask
+		setSPlotSize([1,3])																		#Set image layout
+		sPlot(spPos, [],			(oIMG),			"Original image")		#image + mask
+		sPlot(spPos, [0],			nIMG,				"New Image")				#image + mask
+		if fltr[0:2] in ["LP","HP"]:
+			sPlot(spPos, [3,0],		(fp),	"Applied filter")				#image + mask
+		else:
+			sPlot(spPos, [3,0],		(Hf*iFFTS),	"Applied filter")	#image + mask
+		plt.show()																						#Show image
 
 		print "Happy with current filter, (D0=%d, n=%.2f, k=%d)?" % (D0, n, k)
 		print "Available actions:  -X, +X. Y, Q"
-		ans = raw_input("Action: ")
-		if ans == "Y":
+		ans = raw_input("Action: ")														#Decide what to do
+		if ans == "Y":																				#next
 			happy = True
 			genIMG.update({fltr+" [D0=%d n=%.2f k=%d]" %(D0,n,k):
 										[[0], nIMG ]})
 		elif ans == "Q":
 			print "Exiting"
 			happy = True
+		elif ans == "":
+			pass
 		elif ans[0] == "-":
 			print "Subtracting %s from cutoff freq (D0=%d)" % (ans[1:], D0)
 			D0 = D0 - int(ans[1:])
 		elif ans[0] == "+":
 			print "Adding %s to cutoff freq (D0=%d)" % (ans[1:], D0)
 			D0 = D0 + int(ans[1:])
+
 
 ################################################################################
 #
@@ -687,18 +734,18 @@ def applyFilter( D0=100 ):
 ################################################################################
 def saveImage( title ):
 	print "Saving image to file. (./outdir/"+title+".jpg)"
-	spMisc.imsave("./outdir/"+title+".jpg",
+	spMisc.imsave("./outdir/"+title+".jpg",								#Save image to file
 								imgAction(genIMG[title][1], genIMG[title][0]))
 
-	if len(genIMG[title]) >=3:
-		console_log("Saving image metrics to file.")
-		mets	= genIMG[title][2]
-		out = open("./outdir/"+title+".met", "w")
-		for t in sorted(mets.keys()):
-			out.write( "%25s: %s" % (t, mets[t]) )
-		out.close()
-	else:
-		console_log("No metrics stored for this image.")
+	if len(genIMG[title]) >=3:														#if img contains metrics
+		console_log("Saving image metrics to file.")				#
+		mets	= genIMG[title][2]														#grab metrics
+		out = open("./outdir/"+title+".met", "w")						#open file
+		for t in sorted(mets.keys()):												#
+			out.write( "%25s: %s" % (t, mets[t]) )						#Write metrics to file
+		out.close()																					#Close file
+	else:																									#
+		console_log("No metrics stored for this image.")		#Log error message
 
 
 ################################################################################
@@ -708,16 +755,29 @@ def saveImage( title ):
 # @param title: Title of image with metrics
 ################################################################################
 def dispMetrics( title ):
-	if len(genIMG[title]) < 3:
+	if len(genIMG[title]) < 3:														#If metrics don't exists
 		print "No metrics for this image exists. Please run a comparison."
 		return
 	console_log("Displaying image metrics.")
-	mets = genIMG[title][2]
-	for t in sorted(mets.keys()):
-		if t not in ["difHist","filHist"]:
-			print "%35s: %s" % (t, mets[t])
+	mets = genIMG[title][2]																#Grab title
+	for t in sorted(mets.keys()):													#
+		if t not in ["difHist","filHist"]:									#avoid histograms
+			print "%35s: %s" % (t, mets[t])										#Print metrics
 
 
+
+
+
+
+
+
+################################################################################
+################################################################################
+##
+##	Main running script
+##
+################################################################################
+################################################################################
 
 
 ################################################################################
@@ -784,12 +844,3 @@ while QUIT is False:
 
 
 
-################################################################################
-#
-# 
-#
-#	@param :	
-#
-#	@return :		
-#
-################################################################################
