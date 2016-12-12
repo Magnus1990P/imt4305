@@ -3,13 +3,13 @@ As part of the course IMT4202 / IMT4305 the project task was to create a PoC
 software capable of performing a set of defined tasks using the skills learned
 during the course.
 
-I set to solve this using a mixture of Python and matlab, where Matlab was
+I set to solve this using a mixture of Python and Matlab, where Matlab was
 implemented in Python using bindings through several libraries readily available
 for the public.
 
 \section{Problem description}\label{sec:}
 The task handed out consisted of several sub-problems / tasks to be met. Some
-are fairly easy and others took abit time.  In addition there are several
+are fairly easy and others took some time.  In addition there are several
 methods proposed to further the tool in terms of capability.
 
 The tasks set forth by the task was the following:
@@ -20,7 +20,7 @@ The tasks set forth by the task was the following:
 
 	\item Apply Fourier transform on image.
 	\item Reconstruct image from phase and magnitude.
-	\item Recosntruct image from itsFFourier transform
+	\item Reconstruct image from its Fourier transform
 	\item Detect noise in frequency domain.
 	
 	\item Filter noise in the image.
@@ -38,12 +38,11 @@ methods of comparison due to time restraints, and instead I've proposed some
 methods for comparison as future work proposals.  In order to generate certain
 filters for blurring and sharpening I've relied upon the works of the Department
 of Computer Science at UC Reginas.  Their work has become a well known source
-for generating gaussian, ideal and butterworth filter in Matlab scripts. Their
+for generating Gaussian, ideal and Butterworth filter in Matlab scripts. Their
 work has been converted into the Python language to extend it's audience.
 
 The source code for this software, in its entirety is located at my publicly
-accessible GitHub account\footnote{Authors public GitHub:
-\url{https://gitub.com/Magnus1990P/imt4305/}}
+accessible GitHub account\cite{git}, \url{https://github.com/Magnus1990P/imt4305/}.
 
 
 \section{Overview software}
@@ -55,20 +54,22 @@ is Python v2.7.12. The libraries utilised in the software mainly focused on
 default Python libraries available from Python repository. In addition to these
 libraries I've ported the default Matlab script for calculating the DFTUV of an
 image and the high-pass or low-pass filter with either an "Ideal", "Gaussian" or
-"Buttherworth" cutt-off curve. These Matlab script was created by The Department
-of Computer Science at UC Regina.
+"Butterworth" cut-off curve. These Matlab script was created by The Department
+of Computer Science at UC Regina.  In addition I've used the textbook, "Digital
+Image Processing by Gonzalez and Woods\cite{fip}, for many of the aspects
+implemented in the program.
 
-The three scripts can be found at the following links.
+The three Matlab scripts from UC Regina can be found at the following links.
 \begin{itemize}
-	\item DFTUV.m, generating a padded meshgrid.
+	\item DFTUV.m, generating a padded meshgrid.\cite{ucr_dftuv}
 		\url{http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/dftuv.m}
-	\item lpfilter.m Low-pass filter.
+	\item lpfilter.m Low-pass filter.\cite{ucr_lpfilter}
 		\url{http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/lpfilter.m}
-	\item hpfilter.m High-pass filter.
+	\item hpfilter.m High-pass filter.\cite{ucr_hpfilter}
 		\url{http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/hpfilter.m}
 \end{itemize}
 
-The default Pyton libraries used in the software are.
+The standard Python libraries used in the software are.
 \begin{itemize}
 \begin{multicols}{3}
 	\item OpenCV v2, cv2

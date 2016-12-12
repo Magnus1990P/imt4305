@@ -344,7 +344,7 @@ def sPlot(pos, arr, img, title):
 		for i in range(1,len(img)):
 			plt.plot(range(0,256), img[i])
 			leg.append("Image #"+str(i))
-		plt.legend(leg)
+		plt.legend( leg )
 		plt.axis([0, 256, img[0][0], img[0][1]])
 	
 	else:						#If image
@@ -479,12 +479,13 @@ def compare( title ):
 									oIMG)})																#
 
 	#Plot histograms
+	mxY = amax( histOrg ) if amax(histOrg) >= amax(histFil) else amax(histFil)
 	setSPlotSize([2,2]);																	#2x2 plot
 	sPlot(spPos, [0], 	oIMG, "Original image BW")				
 	sPlot(spPos, dImgArr, dImgImg, dImgTitle)	
-	sPlot(spPos, [20], [[0, amax(histOrg)+500 ], histOrg, histFil], 
+	sPlot(spPos, [20], [[0, mxY+100 ], histOrg, histFil], 
 				"Histogram - both images")
-	sPlot(spPos, [20], [[0, amax(histDif)+100 ], histDif],
+	sPlot(spPos, [20], [[0, amax(histDif)+50 ], histDif],
 				"Histogram - diff")
 	plt.show()
 
