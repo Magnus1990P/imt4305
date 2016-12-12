@@ -1,0 +1,10 @@
+Images in processing list (8)
+  0:	FFT
+  1:	Imaginary part of FFTSHIFT
+  2:	Magnitude of FFTSHIFT
+  3:	Original image BW
+  4:	Phase of FFTSHIFT
+  5:	Real part of FFTSHIFT
+  6:	Reconstructed (Mag * phase)
+  7:	Shifted FFT
+Selected images (1,2,3):	7,6,3

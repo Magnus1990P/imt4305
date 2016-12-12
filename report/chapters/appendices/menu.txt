@@ -1,0 +1,12 @@
+################################################################################
+##	Menu options
+################################################################################
+
+	1 - Display a set of images
+	2 - Perform filter operations on image
+	3 - Compare an altered image against the original and show the data
+	4 - Display metrics of images
+	S - Save new image to file
+	Q - Save data and quit the program
+
+Choice:..... 

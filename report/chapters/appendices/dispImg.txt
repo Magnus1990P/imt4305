@@ -1,0 +1,38 @@
+################################################################################
+##	Menu options
+################################################################################
+
+	1 - Display a set of images
+	2 - Perform filter operations on image
+	3 - Compare an altered image against the original and show the data
+	4 - Display metrics of images
+	S - Save new image to file
+	Q - Save data and quit the program
+
+Choice:..... 1
+Set imageboard layout (height,width):	1,3
+Max number of subplots was changed from 1 to 3
+Images in processing list (8)
+  0:	FFT
+  1:	Imaginary part of FFTSHIFT
+  2:	Magnitude of FFTSHIFT
+  3:	Original image BW
+  4:	Phase of FFTSHIFT
+  5:	Real part of FFTSHIFT
+  6:	Reconstructed (Mag * phase)
+  7:	Shifted FFT
+Selected images (1,2,3):	7,6,3
+Subplotting (Shifted FFT) @ position 1,1
+Performing the following actions on the provided image.
+	Calculate the logarithmic representation of image
+	Taking the absolute values of each pixel
+Subplotting (Reconstructed (Mag * phase)) @ position 2,2
+Performing the following actions on the provided image.
+	Calculating the inverse the fourier shift
+	Calculating the inverse the fourier transform
+	Taking the absolute values of each pixel
+Subplotting (Original image BW) @ position 3,3
+Performing the following actions on the provided image.
+	Taking the absolute values of each pixel
+Position variable has reached its max(3).
+

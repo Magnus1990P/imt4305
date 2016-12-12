@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 ################################################################################
 ##
 ##	@author:	Magnus1990P
@@ -72,6 +73,7 @@ filters		= sorted(["LP: Ideal", "LP: Buttwerworth", "LP: Gaussian",
 ## the University of Regina, Department of Computer Science's websites below
 ## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/lpfilter.m
 ## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/hpfilter.m
+## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/dftuv.m
 ##
 ################################################################################
 #
@@ -103,6 +105,7 @@ def dftuv(M, N):
 ## the University of Regina, Department of Computer Science's websites below
 ## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/lpfilter.m
 ## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/hpfilter.m
+## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/dftuv.m
 ##
 ################################################################################
 #
@@ -142,6 +145,7 @@ def genLPFilter(t, M, N, D0=100, n=1.0):
 ## the University of Regina, Department of Computer Science's websites below
 ## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/lpfilter.m
 ## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/hpfilter.m
+## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/dftuv.m
 ##
 ################################################################################
 #
@@ -181,6 +185,7 @@ def genLPFilter(t, M, N, D0=100, n=1.0):
 ## the University of Regina, Department of Computer Science's websites below
 ## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/lpfilter.m
 ## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/hpfilter.m
+## http://www.cs.uregina.ca/Links/class-info/425-nova/Lab5/M-Functions/dftuv.m
 ##
 ################################################################################
 #

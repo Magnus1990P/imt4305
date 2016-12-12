@@ -1,0 +1,32 @@
+%% Languages: norsk				
+%%						english			
+%% Styles:		twoside, 		The margins will differ dependent on right/left pages
+%%						openright		The first page is a "right" page
+%% indexes:		listings		Show figure list, table list
+%%						glossary		Show glossary and abbreviation list
+%%						todo				Show list of todo-notes in documents
+%%						bib					Create bibliographt
+%%						%
+\documentclass[ english, bib  ]{texReport}
+\input{texReport}
+
+\begin{document}
+	\makefrontpages
+
+	\begin{abstract}
+	\input{chapters/abstract}
+	\end{abstract}
+	
+	\tableofcontents
+	\showList					%%lists of figures, codes, tables, glossary, etc
+
+	%% Chapters and sections for the text
+	%\input{chapters/}
+	\input{chapters/introduction}
+	\input{chapters/swfunc}
+	\input{chapters/swinstruct}
+	\input{chapters/conclusion}
+	
+	\makebib		%%Bibliography and appendix
+\end{document}
+
